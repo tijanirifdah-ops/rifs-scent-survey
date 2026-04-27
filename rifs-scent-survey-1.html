@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RIFS SCENT — Survey</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --gold: #C9A96E;
+    --gold-light: #E8D5A8;
+    --gold-dim: rgba(201,169,110,0.18);
+    --cream: #F5EFE0;
+    --ink: #0A0806;
+    --card: #110E0A;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ink);
+    color: var(--cream);
+    font-family: 'Cormorant Garamond', serif;
+    min-height: 100vh;
+    padding: 2rem 1rem 5rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+  .grain {
+    position: fixed; inset: -200%; width: 400%; height: 400%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+    opacity: 0.3; z-index: 1; pointer-events: none;
+    animation: grain 8s steps(10) infinite;
+  }
+  @keyframes grain {
+    0%,100%{transform:translate(0,0)} 20%{transform:translate(-3%,-2%)} 40%{transform:translate(2%,3%)} 60%{transform:translate(-2%,2%)} 80%{transform:translate(3%,-2%)}
+  }
+  .vignette {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.88) 100%);
+    z-index: 2; pointer-events: none;
+  }
+
+  .wrapper { position: relative; z-index: 10; max-width: 560px; margin: 0 auto; }
+
+  /* HEADER */
+  .header { text-align: center; padding: 2.5rem 0 2rem; animation: fadeUp 1s ease 0.2s both; }
+  .eyebrow {
+    font-family: 'Montserrat', sans-serif; font-weight: 200;
+    font-size: 0.58rem; letter-spacing: 0.5em; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 1.2rem;
+  }
+  .brand-name {
+    font-family: 'Cinzel', serif; font-size: clamp(2.2rem, 9vw, 3.2rem);
+    font-weight: 600; color: var(--gold-light); letter-spacing: 0.15em;
+    text-shadow: 0 0 50px rgba(201,169,110,0.3); margin-bottom: 0.3rem;
+  }
+  .brand-tag {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 0.88rem; color: rgba(201,169,110,0.5);
+    letter-spacing: 0.25em; margin-bottom: 1.5rem;
+  }
+  .divider {
+    width: 120px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 0 auto 1.5rem;
+  }
+  .intro {
+    font-size: 1rem; font-weight: 300; color: rgba(245,239,224,0.65);
+    line-height: 1.75; font-style: italic; max-width: 380px; margin: 0 auto;
+  }
+
+  /* PROGRESS */
+  .progress-wrap { margin: 2rem 0 1.5rem; animation: fadeUp 1s ease 0.4s both; }
+  .progress-label {
+    font-family: 'Montserrat', sans-serif; font-size: 0.55rem; font-weight: 300;
+    letter-spacing: 0.35em; color: rgba(201,169,110,0.5); text-transform: uppercase;
+    margin-bottom: 0.6rem; display: flex; justify-content: space-between;
+  }
+  .progress-bar { height: 1px; background: rgba(201,169,110,0.12); }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  /* SECTIONS */
+  .section { display: none; animation: fadeUp 0.6s ease both; }
+  .section.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-label {
+    font-family: 'Montserrat', sans-serif; font-size: 0.55rem; font-weight: 300;
+    letter-spacing: 0.45em; color: var(--gold); text-transform: uppercase;
+    margin-bottom: 1.8rem; display: flex; align-items: center; gap: 1rem;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--gold-dim); }
+
+  /* QUESTION CARD */
+  .q-card {
+    background: var(--card); border: 1px solid rgba(201,169,110,0.1);
+    padding: 1.6rem 1.5rem; margin-bottom: 1rem;
+    position: relative; transition: border-color 0.3s;
+  }
+  .q-card:focus-within { border-color: rgba(201,169,110,0.32); }
+  .q-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 2px; height: 0; background: var(--gold); transition: height 0.4s ease;
+  }
+  .q-card:focus-within::before { height: 100%; }
+
+  .q-num {
+    font-family: 'Cinzel', serif; font-size: 0.6rem;
+    color: rgba(201,169,110,0.35); letter-spacing: 0.2em; margin-bottom: 0.5rem;
+  }
+  .q-text { font-size: 1.05rem; font-weight: 400; color: var(--cream); line-height: 1.5; margin-bottom: 1.1rem; }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .option {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.65rem 1rem; border: 1px solid rgba(201,169,110,0.1);
+    cursor: pointer; transition: all 0.25s; user-select: none;
+  }
+  .option:hover { border-color: rgba(201,169,110,0.32); background: rgba(201,169,110,0.04); }
+  .option.selected { border-color: var(--gold); background: rgba(201,169,110,0.08); }
+
+  .option-dot {
+    width: 14px; height: 14px; border: 1px solid rgba(201,169,110,0.35);
+    border-radius: 50%; flex-shrink: 0; position: relative; transition: all 0.25s;
+  }
+  .option.selected .option-dot { border-color: var(--gold); background: var(--gold); }
+  .option.selected .option-dot::after {
+    content: ''; position: absolute; inset: 3px; background: var(--ink); border-radius: 50%;
+  }
+  .option.multi .option-dot { border-radius: 2px; }
+  .option-text { font-size: 0.95rem; font-weight: 300; color: rgba(245,239,224,0.75); transition: color 0.25s; }
+  .option.selected .option-text { color: var(--gold-light); }
+
+  /* TEXT INPUT */
+  .text-input {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 1px solid rgba(201,169,110,0.18);
+    color: var(--cream); font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem; font-weight: 300; padding: 0.5rem 0; outline: none;
+    transition: border-color 0.3s;
+  }
+  .text-input:focus { border-bottom-color: var(--gold); }
+  .text-input::placeholder { color: rgba(245,239,224,0.22); font-style: italic; }
+
+  /* NAV */
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; gap: 1rem; }
+
+  .btn {
+    font-family: 'Montserrat', sans-serif; font-weight: 300;
+    font-size: 0.62rem; letter-spacing: 0.4em; text-transform: uppercase;
+    padding: 0.85rem 1.8rem; cursor: pointer; border: 1px solid;
+    transition: all 0.3s; background: transparent;
+  }
+  .btn-prev { border-color: rgba(201,169,110,0.25); color: rgba(201,169,110,0.6); }
+  .btn-prev:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-next { border-color: var(--gold); color: var(--gold); }
+  .btn-next:hover { background: var(--gold); color: var(--ink); }
+  .btn-submit {
+    border-color: var(--gold); color: var(--ink);
+    background: var(--gold); width: 100%;
+    font-size: 0.65rem; letter-spacing: 0.5em; padding: 1rem;
+  }
+  .btn-submit:hover { background: var(--gold-light); border-color: var(--gold-light); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* THANK YOU */
+  .thankyou {
+    display: none; text-align: center;
+    padding: 4rem 2rem; animation: fadeUp 1s ease both;
+  }
+  .thankyou.active { display: block; }
+  .thankyou-icon { font-size: 2.5rem; margin-bottom: 1.5rem; }
+  .thankyou h2 {
+    font-family: 'Cinzel', serif; font-size: clamp(1.5rem, 6vw, 2.2rem);
+    color: var(--gold-light); letter-spacing: 0.1em; margin-bottom: 1rem;
+  }
+  .thankyou p {
+    font-style: italic; font-size: 1rem; color: rgba(245,239,224,0.6);
+    line-height: 1.8; max-width: 340px; margin: 0 auto;
+  }
+  .thankyou .divider { margin: 1.5rem auto; }
+  .thankyou-tag {
+    font-family: 'Montserrat', sans-serif; font-size: 0.55rem;
+    letter-spacing: 0.5em; color: rgba(201,169,110,0.4); text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <p class="eyebrow">Perfume &amp; Fragrance</p>
+    <h1 class="brand-name">RIFS SCENT</h1>
+    <p class="brand-tag">by Rifdah Tijani</p>
+    <div class="divider"></div>
+    <p class="intro">We're launching something beautiful and your opinion matters deeply. Two minutes of your time — that's all we ask. ✦</p>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="prog-text">Section 1 of 4</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+  </div>
+
+  <!-- SECTION 1: ABOUT YOU -->
+  <div class="section active" id="sec-1">
+    <p class="section-label">About You</p>
+
+    <div class="q-card">
+      <p class="q-num">01</p>
+      <p class="q-text">What is your gender?</p>
+      <div class="options" data-q="gender" data-type="single">
+        <div class="option" data-val="Female"><div class="option-dot"></div><span class="option-text">Female</span></div>
+        <div class="option" data-val="Male"><div class="option-dot"></div><span class="option-text">Male</span></div>
+        <div class="option" data-val="Prefer not to say"><div class="option-dot"></div><span class="option-text">Prefer not to say</span></div>
+      </div>
+    </div>
+
+    <div class="q-card">
+      <p class="q-num">02</p>
+      <p class="q-text">What is your age range?</p>
+      <div class="options" data-q="age" data-type="single">
+        <div class="option" data-val="Under 18"><div class="option-dot"></div><span class="option-text">Under 18</span></div>
+        <div class="option" data-val="18–24"><div class="option-dot"></div><span class="option-text">18 – 24</span></div>
+        <div class="option" data-val="25–34"><div class="option-dot"></div><span class="option-text">25 – 34</span></div>
+        <div class="option" data-val="35–44"><div class="option-dot"></div><span class="option-text">35 – 44</span></div>
+        <div class="option" data-val="45+"><div class="option-dot"></div><span class="option-text">45 and above</span></div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <span></span>
+      <button class="btn btn-next" onclick="next(1)">Next ✦</button>
+    </div>
+  </div>
+
+  <!-- SECTION 2: SCENT HABITS -->
+  <div class="section" id="sec-2">
+    <p class="section-label">Your Scent Habits</p>
+
+    <div class="q-card">
+      <p class="q-num">03</p>
+      <p class="q-text">How often do you buy perfume or body spray?</p>
+      <div class="options" data-q="frequency" data-type="single">
+        <div class="option" data-val="Weekly"><div class="option-dot"></div><span class="option-text">Weekly</span></div>
+        <div class="option" data-val="Monthly"><div class="option-dot"></div><span class="option-text">Monthly</span></div>
+        <div class="option" data-val="Every 3–6 months"><div class="option-dot"></div><span class="option-text">Every 3 – 6 months</span></div>
+        <div class="option" data-val="Rarely"><div class="option-dot"></div><span class="option-text">Rarely</span></div>
+      </div>
+    </div>
+
+    <div class="q-card">
+      <p class="q-num">04</p>
+      <p class="q-text">Where do you currently buy your scents?</p>
+      <div class="options" data-q="where" data-type="single">
+        <div class="option" data-val="Online"><div class="option-dot"></div><span class="option-text">Online</span></div>
+        <div class="option" data-val="Physical store"><div class="option-dot"></div><span class="option-text">Physical store</span></div>
+        <div class="option" data-val="From individuals"><div class="option-dot"></div><span class="option-text">From individuals / small sellers</span></div>
+        <div class="option" data-val="Market"><div class="option-dot"></div><span class="option-text">Open market</span></div>
+      </div>
+    </div>
+
+    <div class="q-card">
+      <p class="q-num">05</p>
+      <p class="q-text">What scent types do you prefer? <em style="font-size:0.85rem;color:rgba(201,169,110,0.5)">(Select all that apply)</em></p>
+      <div class="options" data-q="scent_type" data-type="multi">
+        <div class="option multi" data-val="Floral"><div class="option-dot"></div><span class="option-text">Floral 🌸</span></div>
+        <div class="option multi" data-val="Musky"><div class="option-dot"></div><span class="option-text">Musky</span></div>
+        <div class="option multi" data-val="Fruity"><div class="option-dot"></div><span class="option-text">Fruity 🍊</span></div>
+        <div class="option multi" data-val="Woody"><div class="option-dot"></div><span class="option-text">Woody / Oud</span></div>
+        <div class="option multi" data-val="Fresh"><div class="option-dot"></div><span class="option-text">Fresh / Clean</span></div>
+        <div class="option multi" data-val="Sweet"><div class="option-dot"></div><span class="option-text">Sweet / Vanilla</span></div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-prev" onclick="prev(2)">← Back</button>
+      <button class="btn btn-next" onclick="next(2)">Next ✦</button>
+    </div>
+  </div>
+
+  <!-- SECTION 3: PRICING -->
+  <div class="section" id="sec-3">
+    <p class="section-label">Pricing</p>
+
+    <div class="q-card">
+      <p class="q-num">06</p>
+      <p class="q-text">How much do you currently spend on perfume?</p>
+      <div class="options" data-q="current_spend" data-type="single">
+        <div class="option" data-val="Under ₦3,000"><div class="option-dot"></div><span class="option-text">Under ₦3,000</span></div>
+        <div class="option" data-val="₦3,000–₦7,000"><div class="option-dot"></div><span class="option-text">₦3,000 – ₦7,000</span></div>
+        <div class="option" data-val="₦7,000–₦15,000"><div class="option-dot"></div><span class="option-text">₦7,000 – ₦15,000</span></div>
+        <div class="option" data-val="Above ₦15,000"><div class="option-dot"></div><span class="option-text">Above ₦15,000</span></div>
+      </div>
+    </div>
+
+    <div class="q-card">
+      <p class="q-num">07</p>
+      <p class="q-text">What price feels reasonable for a quality local perfume brand?</p>
+      <div class="options" data-q="reasonable_price" data-type="single">
+        <div class="option" data-val="Under ₦3,000"><div class="option-dot"></div><span class="option-text">Under ₦3,000</span></div>
+        <div class="option" data-val="₦3,000–₦7,000"><div class="option-dot"></div><span class="option-text">₦3,000 – ₦7,000</span></div>
+        <div class="option" data-val="₦7,000–₦15,000"><div class="option-dot"></div><span class="option-text">₦7,000 – ₦15,000</span></div>
+        <div class="option" data-val="Above ₦15,000"><div class="option-dot"></div><span class="option-text">Above ₦15,000</span></div>
+      </div>
+    </div>
+
+    <div class="q-card">
+      <p class="q-num">08</p>
+      <p class="q-text">Would you pay more for a long-lasting scent?</p>
+      <div class="options" data-q="pay_more" data-type="single">
+        <div class="option" data-val="Yes"><div class="option-dot"></div><span class="option-text">Yes, absolutely</span></div>
+        <div class="option" data-val="No"><div class="option-dot"></div><span class="option-text">No, price is most important</span></div>
+        <div class="option" data-val="Depends"><div class="option-dot"></div><span class="option-text">Depends on the price</span></div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-prev" onclick="prev(3)">← Back</button>
+      <button class="btn btn-next" onclick="next(3)">Next ✦</button>
+    </div>
+  </div>
+
+  <!-- SECTION 4: RIFS SCENT -->
+  <div class="section" id="sec-4">
+    <p class="section-label">RIFS SCENT</p>
+
+    <div class="q-card">
+      <p class="q-num">09</p>
+      <p class="q-text">What would make you buy from a new perfume brand? <em style="font-size:0.85rem;color:rgba(201,169,110,0.5)">(Select all that apply)</em></p>
+      <div class="options" data-q="buy_reason" data-type="multi">
+        <div class="option multi" data-val="Good price"><div class="option-dot"></div><span class="option-text">Good price</span></div>
+        <div class="option multi" data-val="Nice packaging"><div class="option-dot"></div><span class="option-text">Beautiful packaging</span></div>
+        <div class="option multi" data-val="Long-lasting"><div class="option-dot"></div><span class="option-text">Long-lasting scent</span></div>
+        <div class="option multi" data-val="Trusted brand"><div class="option-dot"></div><span class="option-text">Trusted / known brand</span></div>
+        <div class="option multi" data-val="Recommendation"><div class="option-dot"></div><span class="option-text">Friend's recommendation</span></div>
+      </div>
+    </div>
+
+    <div class="q-card">
+      <p class="q-num">10</p>
+      <p class="q-text">Would you like to be notified when RIFS SCENT launches?</p>
+      <div class="options" data-q="notify" data-type="single">
+        <div class="option" data-val="Yes"><div class="option-dot"></div><span class="option-text">Yes — notify me! 🖤</span></div>
+        <div class="option" data-val="No"><div class="option-dot"></div><span class="option-text">No, thank you</span></div>
+      </div>
+    </div>
+
+    <div class="q-card">
+      <p class="q-num">11</p>
+      <p class="q-text">Drop your WhatsApp number or email for early access ✦ <em style="font-size:0.85rem;color:rgba(201,169,110,0.4)">(Optional)</em></p>
+      <input class="text-input" id="contact-input" type="text" placeholder="e.g. 08012345678 or name@email.com">
+    </div>
+
+    <div class="nav" style="flex-direction:column; gap:0.8rem;">
+      <button class="btn btn-submit" onclick="submitForm()">Submit ✦</button>
+      <button class="btn btn-prev" style="width:100%;text-align:center;" onclick="prev(4)">← Back</button>
+    </div>
+  </div>
+
+  <!-- THANK YOU -->
+  <div class="thankyou" id="thankyou">
+    <div class="thankyou-icon">✦</div>
+    <h2>JazakAllahu Khairan</h2>
+    <div class="divider"></div>
+    <p>Your response has been received. You're now part of something sacred. RIFS SCENT will find its way to you soon, in shaa Allah. 🖤</p>
+    <div class="divider" style="margin-top:2rem"></div>
+    <p class="thankyou-tag">RIFS SCENT · Parfum &amp; Fragrance</p>
+  </div>
+
+</div>
+
+<script>
+// ── SPARKLE CANVAS ──
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+resize(); window.addEventListener('resize', resize);
+
+const stars = Array.from({length: 100}, () => ({
+  x: Math.random() * innerWidth,
+  y: Math.random() * innerHeight,
+  size: Math.random() * 2 + 0.3,
+  maxAlpha: Math.random() * 0.8 + 0.1,
+  phase: Math.random() * Math.PI * 2,
+  speed: Math.random() * 0.025 + 0.006,
+  arms: Math.random() > 0.55 ? Math.random() * 4 + 2 : 0,
+  color: Math.random() > 0.3 ? '201,169,110' : Math.random() > 0.5 ? '232,213,168' : '255,245,220'
+}));
+
+function drawStar(x, y, size, arms, alpha, color) {
+  ctx.save();
+  const g = ctx.createRadialGradient(x, y, 0, x, y, size * 3.5);
+  g.addColorStop(0, `rgba(${color},${alpha * 0.7})`);
+  g.addColorStop(1, `rgba(${color},0)`);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, size * 3.5, 0, Math.PI * 2); ctx.fill();
+  if (arms > 0) {
+    ctx.strokeStyle = `rgba(${color},${alpha * 0.85})`;
+    ctx.lineWidth = size * 0.5; ctx.lineCap = 'round';
+    const l = size * arms;
+    ctx.beginPath(); ctx.moveTo(x-l,y); ctx.lineTo(x+l,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y-l); ctx.lineTo(x,y+l); ctx.stroke();
+    ctx.globalAlpha = alpha * 0.3; ctx.lineWidth = size * 0.22;
+    const d = l * 0.5;
+    ctx.beginPath(); ctx.moveTo(x-d,y-d); ctx.lineTo(x+d,y+d); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+d,y-d); ctx.lineTo(x-d,y+d); ctx.stroke();
+  }
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = `rgba(${color},1)`;
+  ctx.beginPath(); ctx.arc(x, y, size * 0.5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function animateStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    s.phase += s.speed;
+    const tw = Math.sin(s.phase) * 0.5 + 0.5;
+    drawStar(s.x, s.y, s.size, s.arms * tw, tw * s.maxAlpha, s.color);
+  });
+  requestAnimationFrame(animateStars);
+}
+animateStars();
+
+// ── FORM LOGIC ──
+const answers = {};
+let current = 1;
+const total = 4;
+
+// option click
+document.querySelectorAll('.options').forEach(group => {
+  const type = group.dataset.type;
+  const q = group.dataset.q;
+  group.querySelectorAll('.option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (type === 'single') {
+        group.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        answers[q] = opt.dataset.val;
+      } else {
+        opt.classList.toggle('selected');
+        const selected = [...group.querySelectorAll('.option.selected')].map(o => o.dataset.val);
+        answers[q] = selected;
+      }
+    });
+  });
+});
+
+function updateProgress(sec) {
+  const pct = Math.round(((sec - 1) / total) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-text').textContent = `Section ${sec} of ${total}`;
+}
+
+function showSection(n) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById('sec-' + n);
+  if (sec) { sec.classList.remove('active'); void sec.offsetWidth; sec.classList.add('active'); }
+  updateProgress(n);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function next(from) { current = from + 1; showSection(current); }
+function prev(from) { current = from - 1; showSection(current); }
+
+async function submitForm() {
+  answers['contact'] = document.getElementById('contact-input').value;
+
+  const submitBtn = document.querySelector('.btn-submit');
+  submitBtn.textContent = 'Sending... ✦';
+  submitBtn.disabled = true;
+
+  try {
+    const response = await fetch('https://formspree.io/f/mykllrpp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        Gender: answers.gender || 'Not answered',
+        Age: answers.age || 'Not answered',
+        'Buy Frequency': answers.frequency || 'Not answered',
+        'Where They Buy': answers.where || 'Not answered',
+        'Scent Types': Array.isArray(answers.scent_type) ? answers.scent_type.join(', ') : 'Not answered',
+        'Current Spend': answers.current_spend || 'Not answered',
+        'Reasonable Price': answers.reasonable_price || 'Not answered',
+        'Pay More for Quality': answers.pay_more || 'Not answered',
+        'Buy Reasons': Array.isArray(answers.buy_reason) ? answers.buy_reason.join(', ') : 'Not answered',
+        'Wants Notification': answers.notify || 'Not answered',
+        'Contact': answers.contact || 'Not provided'
+      })
+    });
+
+    if (response.ok) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('prog-fill').style.width = '100%';
+      document.getElementById('prog-pct').textContent = '100%';
+      document.getElementById('prog-text').textContent = 'Complete ✦';
+      const ty = document.getElementById('thankyou');
+      ty.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      submitBtn.textContent = 'Submit ✦';
+      submitBtn.disabled = false;
+      alert('Something went wrong. Please try again.');
+    }
+  } catch (err) {
+    submitBtn.textContent = 'Submit ✦';
+    submitBtn.disabled = false;
+    alert('No internet connection. Please check and try again.');
+  }
+}
+</script>
+</body>
+</html>
